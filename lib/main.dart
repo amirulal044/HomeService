@@ -13,7 +13,7 @@ import 'mitra/mitra_detail.dart';
 import 'user/user_dashboard.dart';
 import 'user/user_layanan_order.dart';
 import 'order/order_form.dart';
-import 'mitra/mitra_detail_order_page.dart';
+import 'order/detail_order_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,9 +63,15 @@ class MyApp extends StatelessWidget {
         '/pilih_layanan': (context) =>  PilihLayananPage(),
         '/form_order': (context) => const FormOrderPage(),
         '/order_detail': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments as Map;
-            return DetailOrderPage(orderId: args['orderId']);
-          },
+          // Tangkap arguments sebagai Map
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          
+          return DetailOrderPage(
+            orderId: args['orderId'],
+            // Ambil isMitra, jika tidak ada default false (dianggap User)
+            isMitra: args['isMitra'] ?? false, 
+          );
+        },
       },
     );
   }

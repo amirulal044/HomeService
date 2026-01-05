@@ -16,7 +16,7 @@ final List<Map<String, dynamic>> _keahlianList = [
     'nama': 'Listrik',
     'icon': LucideIcons.zap,
     'type': 'visit', // Biaya Kunjungan
-    'price': 50000,
+    'price': 20000,
     'unit_name': 'x Kunjungan'
   },
   {
@@ -30,14 +30,14 @@ final List<Map<String, dynamic>> _keahlianList = [
     'nama': 'Pipa / Plumbing',
     'icon': LucideIcons.pipette,
     'type': 'visit',
-    'price': 45000,
+    'price': 25000,
     'unit_name': 'x Kunjungan'
   },
   {
     'nama': 'Bangunan / Renovasi',
     'icon': LucideIcons.hammer,
     'type': 'survey',
-    'price': 60000, // Biaya Survey Awal
+    'price': 30000, // Biaya Survey Awal
     'unit_name': 'x Survey'
   },
   {

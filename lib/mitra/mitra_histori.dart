@@ -12,11 +12,11 @@ class HistoriOrderPage extends StatefulWidget {
 
 class _HistoriOrderPageState extends State<HistoriOrderPage>
     with SingleTickerProviderStateMixin {
-  TabController? _tabController;
+  late TabController _tabController;
   String? mitraId;
   String selectedKategori = 'Semua';
 
-  final List<String> kategoriList = [
+  final kategoriList = [
     'Semua',
     'Listrik',
     'AC',
@@ -36,19 +36,12 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    fetchMitraId();
-  }
-
-  Future<void> fetchMitraId() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      setState(() => mitraId = uid);
-    }
+    mitraId = FirebaseAuth.instance.currentUser?.uid;
   }
 
   Stream<QuerySnapshot> getOrderStream(List<String> statusList) {
     if (mitraId == null || statusList.isEmpty) {
-      return const Stream.empty();
+      return const Stream<QuerySnapshot>.empty();
     }
 
     return FirebaseFirestore.instance
@@ -60,11 +53,11 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
   }
 
   List<DocumentSnapshot> applyKategoriFilter(
-      List<DocumentSnapshot> docs, String? kategori) {
-    if (kategori == null || kategori == 'Semua') return docs;
+      List<DocumentSnapshot> docs) {
+    if (selectedKategori == 'Semua') return docs;
     return docs.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
-      return data['kategori'] == kategori;
+      return data['kategori'] == selectedKategori;
     }).toList();
   }
 
@@ -141,26 +134,26 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
     return StreamBuilder<QuerySnapshot>(
       stream: getOrderStream(statusList),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Center(child: Text('Terjadi kesalahan saat mengambil data.'));
-        }
-
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final docs = snapshot.data?.docs ?? [];
-        final filteredDocs = applyKategoriFilter(docs, selectedKategori);
+        if (snapshot.hasError) {
+          return const Center(child: Text('Gagal memuat data'));
+        }
 
-        if (filteredDocs.isEmpty) {
-          return const Center(child: Text('Tidak ada histori order.'));
+        final docs = applyKategoriFilter(snapshot.data?.docs ?? []);
+
+        if (docs.isEmpty) {
+          return const Center(child: Text('Tidak ada histori order'));
         }
 
         return ListView.builder(
-          itemCount: filteredDocs.length,
+          itemCount: docs.length,
           itemBuilder: (context, index) {
-            final doc = filteredDocs[index];
+            final doc = docs[index];
             final data = doc.data() as Map<String, dynamic>;
+
             final kategori = data['kategori'] ?? '-';
             final alamat = data['alamat'] ?? '-';
             final status = data['status'] ?? '-';
@@ -170,19 +163,22 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
                 Navigator.pushNamed(
                   context,
                   '/order_detail',
-                  arguments: {'orderId': doc.id},
+                  arguments: {
+                    'orderId': doc.id,
+                    'isMitra': true,
+                  },
                 );
               },
               child: Card(
                 elevation: 3,
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(getKategoriIcon(kategori),
                           size: 32, color: Colors.blue),
@@ -194,9 +190,7 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
                             Text(
                               kategori,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
+                                  fontWeight: FontWeight.w600, fontSize: 16),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -207,7 +201,6 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
                       buildStatusBadge(status),
                     ],
                   ),
@@ -221,95 +214,71 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
   }
 
   Widget buildKategoriFilterChips() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 16, top: 8),
-          child: Text("Filter Kategori",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: Colors.blue)),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 44,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: kategoriList.map((kategori) {
-              final isSelected = selectedKategori == kategori;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: ChoiceChip(
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(getKategoriIcon(kategori),
-                          size: 16,
-                          color: isSelected ? Colors.white : Colors.blue),
-                      const SizedBox(width: 4),
-                      Text(
-                        kategori,
-                        style: TextStyle(
-                          color:
-                              isSelected ? Colors.white : Colors.blue.shade700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  selected: isSelected,
-                  onSelected: (_) => setState(() => selectedKategori = kategori),
-                  selectedColor: Colors.blue,
-                  backgroundColor: Colors.blue.shade50,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(
-                        color:
-                            isSelected ? Colors.blue : Colors.blue.shade100),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: kategoriList.map((kategori) {
+          final isSelected = selectedKategori == kategori;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: ChoiceChip(
+              label: Text(kategori),
+              selected: isSelected,
+              onSelected: (_) =>
+                  setState(() => selectedKategori = kategori),
+              selectedColor: Colors.blue,
+              backgroundColor: Colors.blue.shade50,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : Colors.blue.shade700,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return mitraId == null
-        ? const Center(child: CircularProgressIndicator())
-        : Column(
-            children: [
-              // Tab aktif & selesai
-              TabBar(
-                controller: _tabController,
-                indicatorColor: Colors.blue,
-                labelColor: Colors.blue,
-                unselectedLabelColor: Colors.grey,
-                tabs: const [
-                  Tab(text: 'Aktif'),
-                  Tab(text: 'Selesai'),
-                ],
-              ),
-              buildKategoriFilterChips(),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    buildOrderList(['diproses', 'sedang_dikerjakan']),
-                    buildOrderList(['selesai']),
-                  ],
-                ),
-              ),
+    if (mitraId == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Scaffold(
+      body: Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            indicatorColor: Colors.blue,
+            labelColor: Colors.blue,
+            unselectedLabelColor: Colors.grey,
+            tabs: const [
+              Tab(text: 'Aktif'),
+              Tab(text: 'Selesai'),
             ],
-          );
+          ),
+          buildKategoriFilterChips(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                buildOrderList(['diproses', 'sedang_dikerjakan']),
+                buildOrderList(['selesai']),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _tabController?.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 }
