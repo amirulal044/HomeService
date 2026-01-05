@@ -24,10 +24,6 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
     'Bersih-Bersih Rumah': LucideIcons.brush,
     'Cuci Piring / Dapur': LucideIcons.utensils,
     'Setrika & Laundry': LucideIcons.shirt,
-    'Baby Sitter': LucideIcons.baby,
-    'Pengasuh Lansia': LucideIcons.heartHandshake,
-    'Asisten Rumah Tangga': LucideIcons.home,
-    'Lainnya': LucideIcons.moreHorizontal,
   };
 
   @override
@@ -127,7 +123,11 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
                   formatTanggal(order['tanggal_order']),
                 ),
                 buildInfoCard(Icons.access_time, 'Waktu', order['waktu_order']),
-                buildInfoCard(Icons.description, 'Deskripsi', order['deskripsi']),
+                buildInfoCard(
+                  Icons.description,
+                  'Deskripsi',
+                  order['deskripsi'],
+                ),
 
                 const SizedBox(height: 24),
                 Center(
@@ -139,10 +139,10 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
                           .collection('orders')
                           .doc(orderId)
                           .update({
-                        'status': 'diproses',
-                        'mitra_id': mitraId,
-                        'updatedAt': FieldValue.serverTimestamp(),
-                      });
+                            'status': 'diproses',
+                            'mitra_id': mitraId,
+                            'updatedAt': FieldValue.serverTimestamp(),
+                          });
 
                       if (!mounted) return;
 
@@ -150,10 +150,7 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
                       Navigator.pushNamed(
                         context,
                         '/order_detail',
-                        arguments: {
-                          'orderId': orderId,
-                          'isMitra': true,
-                        },
+                        arguments: {'orderId': orderId, 'isMitra': true},
                       );
                     },
                     icon: const Icon(Icons.check),
@@ -162,7 +159,9 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
                       backgroundColor: Colors.blue.shade700,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 14),
+                        horizontal: 32,
+                        vertical: 14,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -193,13 +192,18 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style:
-                        const TextStyle(fontSize: 13, color: Colors.grey)),
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                ),
                 const SizedBox(height: 4),
-                Text(value ?? '-',
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600)),
+                Text(
+                  value ?? '-',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),

@@ -37,10 +37,6 @@ class _UserHistoriOrderPageState extends State<UserHistoriOrderPage> {
     'Bersih-Bersih Rumah',
     'Cuci Piring / Dapur',
     'Setrika & Laundry',
-    'Baby Sitter',
-    'Pengasuh Lansia',
-    'Asisten Rumah Tangga',
-    'Lainnya'
   ];
 
   @override
@@ -145,9 +141,7 @@ class _UserHistoriOrderPageState extends State<UserHistoriOrderPage> {
   @override
   Widget build(BuildContext context) {
     if (userId == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -195,7 +189,7 @@ class _UserHistoriOrderPageState extends State<UserHistoriOrderPage> {
                     return Animate(
                       effects: [
                         FadeEffect(),
-                        SlideEffect(begin: const Offset(0, 0.1))
+                        SlideEffect(begin: const Offset(0, 0.1)),
                       ],
                       delay: Duration(milliseconds: 60 * index),
                       child: GestureDetector(
@@ -229,8 +223,9 @@ class _UserHistoriOrderPageState extends State<UserHistoriOrderPage> {
                               Row(
                                 children: [
                                   CircleAvatar(
-                                    backgroundColor:
-                                        getStatusColor(status).withOpacity(0.15),
+                                    backgroundColor: getStatusColor(
+                                      status,
+                                    ).withOpacity(0.15),
                                     child: Icon(
                                       getKategoriIcon(kategori),
                                       color: getStatusColor(status),
@@ -241,25 +236,29 @@ class _UserHistoriOrderPageState extends State<UserHistoriOrderPage> {
                                     child: Text(
                                       kategori,
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                   Text(
                                     "Rp ${NumberFormat('#,###').format(harga)}",
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green),
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Text(alamat,
-                                  style:
-                                      const TextStyle(color: Colors.blueGrey)),
+                              Text(
+                                alamat,
+                                style: const TextStyle(color: Colors.blueGrey),
+                              ),
                               const SizedBox(height: 6),
-                              Text("$tanggal • $waktu",
-                                  style:
-                                      const TextStyle(color: Colors.grey)),
+                              Text(
+                                "$tanggal • $waktu",
+                                style: const TextStyle(color: Colors.grey),
+                              ),
                               const SizedBox(height: 10),
                               LinearProgressIndicator(
                                 value: getProgress(status),
@@ -271,9 +270,10 @@ class _UserHistoriOrderPageState extends State<UserHistoriOrderPage> {
                               Text(
                                 status.replaceAll('_', ' ').toUpperCase(),
                                 style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: getStatusColor(status)),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: getStatusColor(status),
+                                ),
                               ),
                             ],
                           ),

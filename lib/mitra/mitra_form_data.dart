@@ -7,8 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 
-
-
 class MitraFormDataPage extends StatefulWidget {
   const MitraFormDataPage({Key? key}) : super(key: key);
 
@@ -40,10 +38,14 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
   bool isLoading = false;
 
   final List<String> _keahlianList = [
-    'Listrik', 'AC', 'Pipa / Plumbing', 'Bangunan / Renovasi',
-    'Tukang Kebun', 'Bersih-Bersih Rumah', 'Cuci Piring / Dapur',
-    'Setrika & Laundry', 'Baby Sitter', 'Pengasuh Lansia',
-    'Asisten Rumah Tangga', 'Lainnya',
+    'Listrik',
+    'AC',
+    'Pipa / Plumbing',
+    'Bangunan / Renovasi',
+    'Tukang Kebun',
+    'Bersih-Bersih Rumah',
+    'Cuci Piring / Dapur',
+    'Setrika & Laundry',
   ];
 
   Future<void> pickImage(bool isKtp) async {
@@ -58,9 +60,15 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
               title: const Text('Ambil dari Kamera'),
               onTap: () async {
                 Navigator.pop(context);
-                final picked = await picker.pickImage(source: ImageSource.camera);
+                final picked = await picker.pickImage(
+                  source: ImageSource.camera,
+                );
                 if (picked != null) {
-                  setState(() => isKtp ? fotoKtpFile = File(picked.path) : fotoDiriFile = File(picked.path));
+                  setState(
+                    () => isKtp
+                        ? fotoKtpFile = File(picked.path)
+                        : fotoDiriFile = File(picked.path),
+                  );
                 }
               },
             ),
@@ -69,9 +77,15 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
               title: const Text('Pilih dari Galeri'),
               onTap: () async {
                 Navigator.pop(context);
-                final picked = await picker.pickImage(source: ImageSource.gallery);
+                final picked = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
                 if (picked != null) {
-                  setState(() => isKtp ? fotoKtpFile = File(picked.path) : fotoDiriFile = File(picked.path));
+                  setState(
+                    () => isKtp
+                        ? fotoKtpFile = File(picked.path)
+                        : fotoDiriFile = File(picked.path),
+                  );
                 }
               },
             ),
@@ -85,7 +99,9 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
     const cloudName = 'daxhkfgil';
     const uploadPreset = 'home_service';
 
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
+    final url = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
+    );
     final request = http.MultipartRequest('POST', url)
       ..fields['upload_preset'] = uploadPreset
       ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
@@ -125,7 +141,8 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
 
       final urlKtp = await uploadToCloudinary(fotoKtpFile!);
       final urlDiri = await uploadToCloudinary(fotoDiriFile!);
-      if (urlKtp == null || urlDiri == null) throw Exception("Gagal upload gambar");
+      if (urlKtp == null || urlDiri == null)
+        throw Exception("Gagal upload gambar");
 
       final data = {
         'nama': namaC.text.trim(),
@@ -147,15 +164,18 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
-      await FirebaseFirestore.instance.collection('calon_mitras').doc(uid).set(data);
+      await FirebaseFirestore.instance
+          .collection('calon_mitras')
+          .doc(uid)
+          .set(data);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Data mitra berhasil disimpan')),
       );
       Navigator.pushReplacementNamed(context, '/menunggu');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal simpan data: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal simpan data: $e')));
     } finally {
       setState(() => isLoading = false);
     }
@@ -202,9 +222,21 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
               _buildSectionTitle("Data Diri"),
               _buildFormCard([
                 _buildTextField('Nama Lengkap', controller: namaC),
-                _buildTextField('Nomor KTP', controller: ktpC, keyboardType: TextInputType.number),
-                _buildTextField('Nomor HP', controller: hpC, keyboardType: TextInputType.phone),
-                _buildTextField('Alamat Lengkap', controller: alamatC, maxLines: 2),
+                _buildTextField(
+                  'Nomor KTP',
+                  controller: ktpC,
+                  keyboardType: TextInputType.number,
+                ),
+                _buildTextField(
+                  'Nomor HP',
+                  controller: hpC,
+                  keyboardType: TextInputType.phone,
+                ),
+                _buildTextField(
+                  'Alamat Lengkap',
+                  controller: alamatC,
+                  maxLines: 2,
+                ),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: gender,
@@ -216,7 +248,10 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
                   validator: (v) => v == null ? 'Pilih jenis kelamin' : null,
                 ),
                 const SizedBox(height: 14),
-                _buildTextField('Area Layanan / Coverage Area', controller: coverageC),
+                _buildTextField(
+                  'Area Layanan / Coverage Area',
+                  controller: coverageC,
+                ),
               ]),
 
               const SizedBox(height: 16),
@@ -233,7 +268,9 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
                         skill,
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w500,
-                          color: isSelected ? Colors.white : Colors.blue.shade800,
+                          color: isSelected
+                              ? Colors.white
+                              : Colors.blue.shade800,
                         ),
                       ),
                       selectedColor: Colors.blue.shade700,
@@ -241,10 +278,14 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
                       checkmarkColor: Colors.white,
                       onSelected: (val) {
                         setState(() {
-                          isSelected ? selectedKeahlian.remove(skill) : selectedKeahlian.add(skill);
+                          isSelected
+                              ? selectedKeahlian.remove(skill)
+                              : selectedKeahlian.add(skill);
                         });
                       },
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     );
                   }).toList(),
                 ),
@@ -253,26 +294,47 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
               const SizedBox(height: 16),
               _buildSectionTitle("Pengalaman & Deskripsi"),
               _buildFormCard([
-                _buildTextField('Pengalaman Kerja', controller: pengalamanC, maxLines: 2),
-                _buildTextField('Deskripsi Diri Singkat', controller: deskripsiC, maxLines: 3),
+                _buildTextField(
+                  'Pengalaman Kerja',
+                  controller: pengalamanC,
+                  maxLines: 2,
+                ),
+                _buildTextField(
+                  'Deskripsi Diri Singkat',
+                  controller: deskripsiC,
+                  maxLines: 3,
+                ),
               ]),
 
               const SizedBox(height: 16),
               _buildSectionTitle("Rekening Bank"),
               _buildFormCard([
-                _buildTextField('Nomor Rekening', controller: rekeningC, keyboardType: TextInputType.number),
+                _buildTextField(
+                  'Nomor Rekening',
+                  controller: rekeningC,
+                  keyboardType: TextInputType.number,
+                ),
                 _buildTextField('Nama Bank', controller: bankC),
-                _buildTextField('Nama Pemilik Rekening', controller: namaRekeningC),
+                _buildTextField(
+                  'Nama Pemilik Rekening',
+                  controller: namaRekeningC,
+                ),
               ]),
 
               const SizedBox(height: 16),
               _buildSectionTitle("Upload Dokumen"),
               _buildFormCard([
-                Text('Foto KTP', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                Text(
+                  'Foto KTP',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(height: 8),
                 _buildImagePicker(fotoKtpFile, () => pickImage(true)),
                 const SizedBox(height: 16),
-                Text('Foto Diri', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                Text(
+                  'Foto Diri',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(height: 8),
                 _buildImagePicker(fotoDiriFile, () => pickImage(false)),
               ]),
@@ -286,7 +348,10 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.check),
                   label: Text(
@@ -296,7 +361,9 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade800,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -370,7 +437,12 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
             child: Material(
               elevation: 4,
               borderRadius: BorderRadius.circular(12),
-              child: Image.file(imageFile, height: 150, width: double.infinity, fit: BoxFit.cover),
+              child: Image.file(
+                imageFile,
+                height: 150,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
           )
         else
@@ -382,7 +454,13 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.blue.shade100),
             ),
-            child: Center(child: Icon(Icons.image_outlined, size: 40, color: Colors.blueGrey)),
+            child: Center(
+              child: Icon(
+                Icons.image_outlined,
+                size: 40,
+                color: Colors.blueGrey,
+              ),
+            ),
           ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
@@ -391,7 +469,9 @@ class _MitraFormDataPageState extends State<MitraFormDataPage> {
           label: const Text('Pilih Gambar'),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.blue.shade800,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
       ],

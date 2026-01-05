@@ -54,6 +54,7 @@ dependencies:
   shimmer: ^3.0.0
   lottie: ^3.3.1
   async: ^2.13.0
+  flutter_map_cancellable_tile_provider: ^3.1.1
 
 dev_dependencies:
   flutter_test:

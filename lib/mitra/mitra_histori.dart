@@ -26,10 +26,6 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
     'Bersih-Bersih Rumah',
     'Cuci Piring / Dapur',
     'Setrika & Laundry',
-    'Baby Sitter',
-    'Pengasuh Lansia',
-    'Asisten Rumah Tangga',
-    'Lainnya'
   ];
 
   @override
@@ -52,8 +48,7 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
         .snapshots();
   }
 
-  List<DocumentSnapshot> applyKategoriFilter(
-      List<DocumentSnapshot> docs) {
+  List<DocumentSnapshot> applyKategoriFilter(List<DocumentSnapshot> docs) {
     if (selectedKategori == 'Semua') return docs;
     return docs.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
@@ -163,16 +158,12 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
                 Navigator.pushNamed(
                   context,
                   '/order_detail',
-                  arguments: {
-                    'orderId': doc.id,
-                    'isMitra': true,
-                  },
+                  arguments: {'orderId': doc.id, 'isMitra': true},
                 );
               },
               child: Card(
                 elevation: 3,
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -180,8 +171,11 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
-                      Icon(getKategoriIcon(kategori),
-                          size: 32, color: Colors.blue),
+                      Icon(
+                        getKategoriIcon(kategori),
+                        size: 32,
+                        color: Colors.blue,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -190,13 +184,17 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
                             Text(
                               kategori,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 16),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               alamat,
                               style: const TextStyle(
-                                  fontSize: 13, color: Colors.grey),
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),
@@ -226,8 +224,7 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
             child: ChoiceChip(
               label: Text(kategori),
               selected: isSelected,
-              onSelected: (_) =>
-                  setState(() => selectedKategori = kategori),
+              onSelected: (_) => setState(() => selectedKategori = kategori),
               selectedColor: Colors.blue,
               backgroundColor: Colors.blue.shade50,
               labelStyle: TextStyle(
@@ -243,9 +240,7 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
   @override
   Widget build(BuildContext context) {
     if (mitraId == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
