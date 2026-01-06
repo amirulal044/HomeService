@@ -15,7 +15,7 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
   String? mitraId;
   bool isLoading = true;
 
-  final kategoriIcons = {
+  final Map<String, IconData> kategoriIcons = {
     'Listrik': LucideIcons.zap,
     'AC': LucideIcons.wind,
     'Pipa / Plumbing': LucideIcons.pipette,
@@ -149,8 +149,8 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
                       Navigator.pop(context);
                       Navigator.pushNamed(
                         context,
-                        '/order_detail',
-                        arguments: {'orderId': orderId, 'isMitra': true},
+                        '/detail_mitra',
+                        arguments: {'orderId': orderId},
                       );
                     },
                     icon: const Icon(Icons.check),
@@ -176,7 +176,7 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
     );
   }
 
-  Widget buildInfoCard(IconData icon, String label, String? value) {
+  Widget buildInfoCard(IconData icon, String label, dynamic value) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -198,7 +198,7 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  value ?? '-',
+                  value?.toString() ?? '-',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -214,50 +214,50 @@ class _MitraOrderPageState extends State<MitraOrderPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     return Scaffold(
-      body: StreamBuilder<QuerySnapshot>(
-        stream: getOrderStream(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : StreamBuilder<QuerySnapshot>(
+              stream: getOrderStream(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          final filteredOrders = snapshot.data!.docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            return cocokDenganKeahlian(data);
-          }).toList();
+                final filteredOrders = snapshot.data!.docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return cocokDenganKeahlian(data);
+                }).toList();
 
-          if (filteredOrders.isEmpty) {
-            return const Center(child: Text("Belum ada order yang cocok"));
-          }
+                if (filteredOrders.isEmpty) {
+                  return const Center(
+                    child: Text("Belum ada order yang cocok"),
+                  );
+                }
 
-          return ListView.builder(
-            itemCount: filteredOrders.length,
-            itemBuilder: (context, index) {
-              final doc = filteredOrders[index];
-              final data = doc.data() as Map<String, dynamic>;
+                return ListView.builder(
+                  itemCount: filteredOrders.length,
+                  itemBuilder: (context, index) {
+                    final doc = filteredOrders[index];
+                    final data = doc.data() as Map<String, dynamic>;
 
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.blue.shade100,
-                  child: Icon(
-                    kategoriIcons[data['kategori']] ?? Icons.work,
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-                title: Text(data['kategori'] ?? '-'),
-                subtitle: Text(data['alamat'] ?? '-'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => tampilkanDetailOrder(doc.id, data),
-              );
-            },
-          );
-        },
-      ),
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blue.shade100,
+                        child: Icon(
+                          kategoriIcons[data['kategori']] ?? Icons.work,
+                          color: Colors.blue.shade700,
+                        ),
+                      ),
+                      title: Text(data['kategori'] ?? '-'),
+                      subtitle: Text(data['alamat'] ?? '-'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => tampilkanDetailOrder(doc.id, data),
+                    );
+                  },
+                );
+              },
+            ),
     );
   }
 }

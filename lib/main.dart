@@ -13,13 +13,12 @@ import 'mitra/mitra_detail.dart';
 import 'user/user_dashboard.dart';
 import 'user/user_layanan_order.dart';
 import 'order/order_form.dart';
-import 'order/detail_order_page.dart';
+import 'order/detail_order_user_page.dart';
+import 'order/detail_order_mitra_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -60,17 +59,15 @@ class MyApp extends StatelessWidget {
         '/admin': (context) => const AdminHomePage(),
         '/detail-mitra': (context) => const MitraDetailPage(),
         '/dashboard_user': (context) => const UserDashboardPage(),
-        '/pilih_layanan': (context) =>  PilihLayananPage(),
+        '/pilih_layanan': (context) => PilihLayananPage(),
         '/form_order': (context) => const FormOrderPage(),
-        '/order_detail': (context) {
-          // Tangkap arguments sebagai Map
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-          
-          return DetailOrderPage(
-            orderId: args['orderId'],
-            // Ambil isMitra, jika tidak ada default false (dianggap User)
-            isMitra: args['isMitra'] ?? false, 
-          );
+        '/detail_mitra': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return DetailOrderMitraPage(orderId: args['orderId']);
+        },
+        '/detail_user': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return DetailOrderUserPage(orderId: args['orderId']);
         },
       },
     );

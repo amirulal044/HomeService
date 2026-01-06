@@ -110,12 +110,6 @@ class _UserHistoriOrderPageState extends State<UserHistoriOrderPage> {
         return Icons.kitchen;
       case 'Setrika & Laundry':
         return Icons.local_laundry_service;
-      case 'Baby Sitter':
-        return Icons.child_friendly;
-      case 'Pengasuh Lansia':
-        return Icons.elderly;
-      case 'Asisten Rumah Tangga':
-        return Icons.home_filled;
       default:
         return Icons.miscellaneous_services;
     }
@@ -196,11 +190,10 @@ class _UserHistoriOrderPageState extends State<UserHistoriOrderPage> {
                         onTap: () {
                           Navigator.pushNamed(
                             context,
-                            '/order_detail',
+                            '/detail_user', // Panggil route khusus user
                             arguments: {
                               'orderId': docs[index].id,
-                              'isMitra': false,
-                            },
+                            }, // Tidak perlu isMitra lagi
                           );
                         },
                         child: Container(

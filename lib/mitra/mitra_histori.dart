@@ -74,12 +74,6 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
         return LucideIcons.utensils;
       case 'Setrika & Laundry':
         return LucideIcons.shirt;
-      case 'Baby Sitter':
-        return LucideIcons.baby;
-      case 'Pengasuh Lansia':
-        return LucideIcons.heartHandshake;
-      case 'Asisten Rumah Tangga':
-        return LucideIcons.home;
       default:
         return LucideIcons.moreHorizontal;
     }
@@ -157,8 +151,8 @@ class _HistoriOrderPageState extends State<HistoriOrderPage>
               onTap: () {
                 Navigator.pushNamed(
                   context,
-                  '/order_detail',
-                  arguments: {'orderId': doc.id, 'isMitra': true},
+                  '/detail_mitra', // Panggil route khusus mitra
+                  arguments: {'orderId': doc.id}, // Tidak perlu isMitra lagi
                 );
               },
               child: Card(
