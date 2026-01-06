@@ -19,11 +19,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
     AdminProfilPage(),
   ];
 
-  final List<String> _titles = [
-    'Kelola Mitra',
-    'Daftar Order',
-    'Profil Admin',
-  ];
+  final List<String> _titles = ['Kelola Mitra', 'Daftar Order', 'Profil Admin'];
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +35,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade700,
+        backgroundColor: Colors.indigo.shade700,
         elevation: 2,
       ),
       body: AnimatedSwitcher(
@@ -51,24 +47,24 @@ class _AdminHomePageState extends State<AdminHomePage> {
         height: 70,
         elevation: 6,
         backgroundColor: Colors.white,
-        indicatorColor: Colors.blue.shade100,
+        indicatorColor: Colors.indigo.shade100,
         onDestinationSelected: (index) {
           setState(() => _currentIndex = index);
         },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.group_outlined),
-            selectedIcon: Icon(Icons.group, color: Colors.blue),
+            selectedIcon: Icon(Icons.group, color: Colors.indigo),
             label: 'Mitra',
           ),
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long, color: Colors.blue),
+            selectedIcon: Icon(Icons.receipt_long, color: Colors.indigo),
             label: 'Order',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: Colors.blue),
+            selectedIcon: Icon(Icons.person, color: Colors.indigo),
             label: 'Profil',
           ),
         ],

@@ -16,10 +16,12 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
   Stream<List<QueryDocumentSnapshot>> getRealtimeFilteredDocs() async* {
     final firestore = FirebaseFirestore.instance;
 
-    Stream<QuerySnapshot> calonStream =
-        firestore.collection('calon_mitras').snapshots();
-    Stream<QuerySnapshot> mitraStream =
-        firestore.collection('mitras').snapshots();
+    Stream<QuerySnapshot> calonStream = firestore
+        .collection('calon_mitras')
+        .snapshots();
+    Stream<QuerySnapshot> mitraStream = firestore
+        .collection('mitras')
+        .snapshots();
 
     await for (final snapshot in StreamZip([calonStream, mitraStream])) {
       List<QueryDocumentSnapshot> calonDocs = snapshot[0].docs;
@@ -31,14 +33,18 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
         combined = [...calonDocs, ...mitraDocs];
       } else if (statusFilter == 'Disetujui') {
         combined = mitraDocs
-            .where((doc) =>
-                (doc.data() as Map<String, dynamic>)['status'] == 'disetujui')
+            .where(
+              (doc) =>
+                  (doc.data() as Map<String, dynamic>)['status'] == 'disetujui',
+            )
             .toList();
       } else {
         combined = calonDocs
-            .where((doc) =>
-                (doc.data() as Map<String, dynamic>)['status'] ==
-                statusFilter.toLowerCase())
+            .where(
+              (doc) =>
+                  (doc.data() as Map<String, dynamic>)['status'] ==
+                  statusFilter.toLowerCase(),
+            )
             .toList();
       }
 
@@ -66,7 +72,10 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
                 items: const [
                   DropdownMenuItem(value: 'Semua', child: Text('Semua')),
                   DropdownMenuItem(value: 'Menunggu', child: Text('Menunggu')),
-                  DropdownMenuItem(value: 'Disetujui', child: Text('Disetujui')),
+                  DropdownMenuItem(
+                    value: 'Disetujui',
+                    child: Text('Disetujui'),
+                  ),
                   DropdownMenuItem(value: 'Ditolak', child: Text('Ditolak')),
                 ],
                 onChanged: (val) => setState(() => statusFilter = val!),
@@ -149,12 +158,16 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
                             // Header Nama + Email + Tombol
                             Row(
                               children: [
-                                const Icon(Icons.account_circle,
-                                    size: 40, color: Colors.blue),
+                                const Icon(
+                                  Icons.account_circle,
+                                  size: 40,
+                                  color: Colors.indigo,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         nama,
@@ -166,7 +179,9 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
                                       Text(
                                         email,
                                         style: const TextStyle(
-                                            fontSize: 13, color: Colors.black54),
+                                          fontSize: 13,
+                                          color: Colors.black54,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -176,19 +191,19 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
                                     Navigator.pushNamed(
                                       context,
                                       '/detail-mitra',
-                                      arguments: {
-                                        'uid': uid,
-                                        'data': data,
-                                      },
+                                      arguments: {'uid': uid, 'data': data},
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue.shade600,
+                                    backgroundColor: Colors.indigo.shade600,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8)),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                   ),
-                                  child: const Text('Detail',
-                                      style: TextStyle(color: Colors.white)),
+                                  child: const Text(
+                                    'Detail',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                 ),
                               ],
                             ),
@@ -197,14 +212,19 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
                             // Alamat
                             Row(
                               children: [
-                                const Icon(Icons.location_on,
-                                    size: 18, color: Colors.grey),
+                                const Icon(
+                                  Icons.location_on,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
                                     alamat,
                                     style: const TextStyle(
-                                        color: Colors.black87, fontSize: 13),
+                                      color: Colors.black87,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -215,8 +235,11 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
                             // Status
                             Row(
                               children: [
-                                const Icon(Icons.verified,
-                                    size: 18, color: Colors.grey),
+                                const Icon(
+                                  Icons.verified,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Status: $status',
@@ -235,13 +258,18 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
                             // Keahlian
                             Row(
                               children: const [
-                                Icon(Icons.work_outline,
-                                    size: 18, color: Colors.grey),
+                                Icon(
+                                  Icons.work_outline,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'Keahlian:',
                                   style: TextStyle(
-                                      fontWeight: FontWeight.w600, fontSize: 13),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ],
                             ),
@@ -252,7 +280,7 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
                               children: keahlianList.map((item) {
                                 return Chip(
                                   label: Text(item),
-                                  backgroundColor: Colors.blue.shade50,
+                                  backgroundColor: Colors.indigo.shade50,
                                   labelStyle: const TextStyle(fontSize: 12),
                                 );
                               }).toList(),
@@ -271,4 +299,3 @@ class _AdminMitraPageState extends State<AdminMitraPage> {
     );
   }
 }
-

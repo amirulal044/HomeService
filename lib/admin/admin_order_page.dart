@@ -13,15 +13,25 @@ class _AdminOrderPageState extends State<AdminOrderPage> {
   String selectedKategori = 'Semua';
 
   final List<String> statusList = [
-    'Semua', 'menunggu', 'diterima', 'diproses',
-    'sedang_dikerjakan', 'selesai', 'dibatalkan',
+    'Semua',
+    'menunggu',
+    'diterima',
+    'diproses',
+    'sedang_dikerjakan',
+    'selesai',
+    'dibatalkan',
   ];
 
   final List<String> kategoriList = [
-    'Semua', 'Listrik', 'AC', 'Pipa / Plumbing',
-    'Bangunan / Renovasi', 'Tukang Kebun', 'Bersih-Bersih Rumah',
-    'Cuci Piring / Dapur', 'Setrika & Laundry', 'Baby Sitter',
-    'Pengasuh Lansia', 'Asisten Rumah Tangga', 'Lainnya'
+    'Semua',
+    'Listrik',
+    'AC',
+    'Pipa / Plumbing',
+    'Bangunan / Renovasi',
+    'Tukang Kebun',
+    'Bersih-Bersih Rumah',
+    'Cuci Piring / Dapur',
+    'Setrika & Laundry',
   ];
 
   Stream<QuerySnapshot> getOrderStream() {
@@ -41,13 +51,20 @@ class _AdminOrderPageState extends State<AdminOrderPage> {
 
   Color getStatusColor(String status) {
     switch (status) {
-      case 'menunggu': return Colors.orange;
-      case 'diterima': return Colors.green.shade700;
-      case 'diproses': return Colors.blue;
-      case 'sedang_dikerjakan': return Colors.indigo;
-      case 'selesai': return Colors.green;
-      case 'dibatalkan': return Colors.red;
-      default: return Colors.grey;
+      case 'menunggu':
+        return Colors.orange;
+      case 'diterima':
+        return Colors.green.shade700;
+      case 'diproses':
+        return Colors.blue;
+      case 'sedang_dikerjakan':
+        return Colors.indigo;
+      case 'selesai':
+        return Colors.green;
+      case 'dibatalkan':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -62,7 +79,9 @@ class _AdminOrderPageState extends State<AdminOrderPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Card(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
@@ -77,7 +96,9 @@ class _AdminOrderPageState extends State<AdminOrderPage> {
                           isDense: true,
                         ),
                         items: kategoriList
-                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                            .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)),
+                            )
                             .toList(),
                         onChanged: (val) =>
                             setState(() => selectedKategori = val ?? 'Semua'),
@@ -94,7 +115,9 @@ class _AdminOrderPageState extends State<AdminOrderPage> {
                           isDense: true,
                         ),
                         items: statusList
-                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                            .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)),
+                            )
                             .toList(),
                         onChanged: (val) =>
                             setState(() => selectedStatus = val ?? 'Semua'),
@@ -142,8 +165,10 @@ class _AdminOrderPageState extends State<AdminOrderPage> {
                         contentPadding: const EdgeInsets.all(14),
                         leading: CircleAvatar(
                           backgroundColor: Colors.blue.shade50,
-                          child: Icon(Icons.home_repair_service,
-                              color: Colors.blue.shade700),
+                          child: Icon(
+                            Icons.home_repair_service,
+                            color: Colors.blue.shade700,
+                          ),
                         ),
                         title: Text(
                           kategori,
@@ -152,7 +177,9 @@ class _AdminOrderPageState extends State<AdminOrderPage> {
                         subtitle: Text(alamat),
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(
-                              vertical: 4, horizontal: 10),
+                            vertical: 4,
+                            horizontal: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: getStatusColor(status).withOpacity(0.1),
                             border: Border.all(color: getStatusColor(status)),

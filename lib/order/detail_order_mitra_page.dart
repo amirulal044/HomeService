@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'order_detail_widgets.dart'; // Pastikan file shared widget sudah ada
 
 class DetailOrderMitraPage extends StatefulWidget {
@@ -14,30 +16,24 @@ class DetailOrderMitraPage extends StatefulWidget {
 
 class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
   // ===========================================================================
-  // BAGIAN 1: LOGIKA INPUT / EDIT BIAYA (REVISI)
+  // BAGIAN 1: LOGIC (INPUT BIAYA, BATAL REVISI, DLL)
   // ===========================================================================
+
   Future<void> _tampilDialogInputBiaya(Map<String, dynamic> currentData) async {
     final _namaItemC = TextEditingController();
     final _hargaItemC = TextEditingController();
     final _qtyItemC = TextEditingController(text: '1');
-
     List<Map<String, dynamic>> itemsDraft = [];
 
-    // --- LOGIKA LOAD DATA (PENTING) ---
-    // 1. Jika ada revisi PENDING -> Load data pending (Mode Edit)
     if (currentData['revisi_biaya'] != null &&
         currentData['revisi_biaya']['status'] == 'pending_approval') {
       itemsDraft = List<Map<String, dynamic>>.from(
         currentData['revisi_biaya']['items'],
       );
-    }
-    // 2. Jika tidak, Load data ACTIVE (Mode Tambah dari yang sudah disetujui)
-    else if (currentData['active_items'] != null &&
+    } else if (currentData['active_items'] != null &&
         (currentData['active_items'] as List).isNotEmpty) {
       itemsDraft = List<Map<String, dynamic>>.from(currentData['active_items']);
-    }
-    // 3. Jika Order Baru -> Load Harga Dasar
-    else {
+    } else {
       itemsDraft.add({
         'nama': 'Layanan Utama (${currentData['kategori']})',
         'harga': currentData['harga_dasar'] ?? 0,
@@ -55,7 +51,6 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
             for (var i in itemsDraft) {
               totalDraft += (i['harga'] * i['qty']);
             }
-
             return AlertDialog(
               title: const Text("Input Rincian Biaya"),
               content: SizedBox(
@@ -64,7 +59,6 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // List Item
                       Container(
                         height: 180,
                         margin: const EdgeInsets.only(bottom: 10),
@@ -79,20 +73,9 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
                                 itemCount: itemsDraft.length,
                                 itemBuilder: (c, i) => ListTile(
                                   dense: true,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 0,
-                                  ),
-                                  title: Text(
-                                    "${itemsDraft[i]['nama']}",
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  title: Text("${itemsDraft[i]['nama']}"),
                                   subtitle: Text(
                                     "${itemsDraft[i]['qty']} x Rp ${itemsDraft[i]['harga']}",
-                                    style: const TextStyle(fontSize: 12),
                                   ),
                                   trailing: IconButton(
                                     icon: const Icon(
@@ -107,8 +90,6 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
                                 ),
                               ),
                       ),
-                      const Divider(),
-                      // Form Input
                       TextField(
                         controller: _namaItemC,
                         decoration: const InputDecoration(
@@ -117,7 +98,6 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
                           isDense: true,
                         ),
                       ),
-                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
@@ -146,12 +126,8 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
                       ),
                       const SizedBox(height: 10),
                       ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade50,
-                          foregroundColor: Colors.blue,
-                        ),
                         icon: const Icon(Icons.add, size: 16),
-                        label: const Text("Tambah ke List"),
+                        label: const Text("Tambah"),
                         onPressed: () {
                           if (_namaItemC.text.isNotEmpty &&
                               _hargaItemC.text.isNotEmpty) {
@@ -170,7 +146,7 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        "Total Pengajuan: Rp ${NumberFormat('#,###').format(totalDraft)}",
+                        "Total: Rp ${NumberFormat('#,###').format(totalDraft)}",
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.blue,
@@ -200,12 +176,8 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
                             'timestamp': FieldValue.serverTimestamp(),
                           },
                         });
-                    if (mounted)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Revisi dikirim ke User")),
-                      );
                   },
-                  child: const Text("Kirim Pengajuan"),
+                  child: const Text("Kirim"),
                 ),
               ],
             );
@@ -215,15 +187,12 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
     );
   }
 
-  // LOGIKA: HAPUS REVISI
   Future<void> _batalkanRevisi() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Hapus Pengajuan?"),
-        content: const Text(
-          "User belum menyetujui. Pengajuan ini akan dihapus dan kembali ke harga sebelumnya.",
-        ),
+        content: const Text("Pengajuan akan dihapus."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -240,55 +209,48 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
         ],
       ),
     );
-
     if (confirm == true) {
       await FirebaseFirestore.instance
           .collection('orders')
           .doc(widget.orderId)
-          .update({
-            'revisi_biaya': FieldValue.delete(), // Hapus field
-          });
+          .update({'revisi_biaya': FieldValue.delete()});
     }
   }
 
-  // LOGIKA: LIHAT DETAIL (READ ONLY)
   void _lihatDetailPending(Map<String, dynamic> revisiData) {
     List items = revisiData['items'] ?? [];
     double total = (revisiData['total_akhir'] ?? 0).toDouble();
-
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Rincian Pengajuan Anda",
+              "Rincian Pengajuan",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             const Divider(),
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("${item['nama']} (x${item['qty']})"),
-                    Text(
-                      "Rp ${NumberFormat('#,###').format(item['harga'] * item['qty'])}",
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            ...items
+                .map(
+                  (item) => Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("${item['nama']} (x${item['qty']})"),
+                      Text(
+                        "Rp ${NumberFormat('#,###').format(item['harga'] * item['qty'])}",
+                      ),
+                    ],
+                  ),
+                )
+                .toList(),
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Total Pengajuan",
+                  "Total",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
@@ -305,10 +267,6 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade200,
-                  foregroundColor: Colors.black,
-                ),
                 child: const Text("Tutup"),
               ),
             ),
@@ -318,48 +276,105 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
     );
   }
 
-  // ===========================================================================
-  // BAGIAN 2: LOGIKA KONFIRMASI PEMBAYARAN
-  // ===========================================================================
   Future<void> _konfirmasiPembayaran(bool terima) async {
-    // Jika terima = true -> status: paid
-    // Jika terima = false -> status: unpaid
     String newStatus = terima ? 'paid' : 'unpaid';
-
     await FirebaseFirestore.instance
         .collection('orders')
         .doc(widget.orderId)
         .update({
           'payment_status': newStatus,
-          // Jika ditolak, hapus method agar user bisa pilih lagi
           if (!terima) 'payment_method': FieldValue.delete(),
         });
-
-    if (mounted) {
+    if (mounted)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            terima
-                ? "Pembayaran Diterima!"
-                : "Pembayaran Ditolak. User diminta bayar ulang.",
+            terima ? "Pembayaran Diterima!" : "Pembayaran Ditolak.",
           ),
           backgroundColor: terima ? Colors.green : Colors.red,
         ),
       );
-    }
   }
 
   // ===========================================================================
-  // BAGIAN 3: UPDATE STATUS ORDER
+  // LOGIKA BARU: SELESAIKAN ORDER + HITUNG PENDAPATAN MITRA
   // ===========================================================================
-  Future<void> konfirmasiUpdateStatus(String newStatus) async {
+  Future<void> _selesaikanOrder(double totalBayar) async {
+    final firestore = FirebaseFirestore.instance;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // 1. RUMUS PERHITUNGAN PENDAPATAN
+    double potonganPersen = 0.10; // 10%
+    double nominalPotongan = totalBayar * potonganPersen;
+    double biayaAdmin = 2000; // Rp 2.000
+    double pendapatanBersih = totalBayar - nominalPotongan - biayaAdmin;
+
+    try {
+      // Gunakan Batch Write (Supaya semua data tersimpan bebarengan/aman)
+      WriteBatch batch = firestore.batch();
+
+      // A. Update Status Order jadi 'selesai'
+      DocumentReference orderRef = firestore
+          .collection('orders')
+          .doc(widget.orderId);
+      batch.update(orderRef, {
+        'status': 'selesai',
+        'updatedAt': FieldValue.serverTimestamp(),
+        'statusLogs': FieldValue.arrayUnion([
+          {'status': 'selesai', 'timestamp': Timestamp.now(), 'by': 'mitra'},
+        ]),
+      });
+
+      // B. Catat di Riwayat Transaksi (Dompet)
+      DocumentReference transRef = firestore
+          .collection('wallet_transactions')
+          .doc();
+      batch.set(transRef, {
+        'mitra_id': user.uid,
+        'order_id': widget.orderId,
+        'type': 'income', // Pemasukan
+        'nominal_kotor': totalBayar, // Total dari User
+        'potongan_aplikasi': nominalPotongan, // 10%
+        'biaya_admin': biayaAdmin, // 2000
+        'pendapatan_bersih': pendapatanBersih, // Yang masuk saku mitra
+        'keterangan': 'Penyelesaian Order',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // C. Tambah Saldo ke Akun Mitra (Optional: Jika ada field saldo_dompet)
+      DocumentReference mitraRef = firestore.collection('mitras').doc(user.uid);
+      batch.update(mitraRef, {
+        'saldo_dompet': FieldValue.increment(pendapatanBersih),
+      });
+
+      // EKSEKUSI SEMUA PERUBAHAN
+      await batch.commit();
+
+      // Tampilkan Info Berhasil
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Selesai! Pendapatan Rp ${NumberFormat('#,###').format(pendapatanBersih)} masuk dompet.",
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Gagal memproses: $e")));
+    }
+  }
+
+  Future<void> konfirmasiMulaiJalan() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Konfirmasi'),
-        content: Text(
-          'Ubah status menjadi "${newStatus.replaceAll('_', ' ').toUpperCase()}"?',
-        ),
+        content: const Text('Terima order dan mulai jalan ke lokasi?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -372,17 +387,18 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
         ],
       ),
     );
-
     if (confirmed == true) {
+      final String? currentMitraId = FirebaseAuth.instance.currentUser?.uid;
       await FirebaseFirestore.instance
           .collection('orders')
           .doc(widget.orderId)
           .update({
-            'status': newStatus,
+            'status': 'sedang_dikerjakan',
+            if (currentMitraId != null) 'mitra_id': currentMitraId,
             'updatedAt': FieldValue.serverTimestamp(),
             'statusLogs': FieldValue.arrayUnion([
               {
-                'status': newStatus,
+                'status': 'sedang_dikerjakan',
                 'timestamp': Timestamp.now(),
                 'by': 'mitra',
               },
@@ -391,152 +407,17 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
     }
   }
 
-  // ===========================================================================
-  // BAGIAN 4: UI WIDGETS KHUSUS MITRA
-  // ===========================================================================
-
-  // Widget: Kartu Pending Revisi (Oranye)
-  Widget _buildCardPendingRevisi(Map<String, dynamic> data) {
-    final revisi = data['revisi_biaya'];
-    final total = revisi['total_akhir'] ?? 0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.hourglass_top, color: Colors.orange.shade900),
-              const SizedBox(width: 8),
-              Text(
-                "Menunggu Persetujuan User",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange.shade900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            "Pengajuan: Rp ${NumberFormat('#,###').format(total)}",
-            style: TextStyle(color: Colors.orange.shade900),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _lihatDetailPending(revisi),
-                  child: const Text("Detail"),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _tampilDialogInputBiaya(data),
-                  child: const Text("Ubah"),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: _batalkanRevisi,
-                icon: const Icon(Icons.delete_forever, color: Colors.red),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.shade50,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+  Future<void> _hubungiUser(String phone) async {
+    String number = phone.replaceAll(RegExp(r'\D'), '');
+    if (number.startsWith('0')) number = '62${number.substring(1)}';
+    final url = Uri.parse("https://wa.me/$number");
+    if (await canLaunchUrl(url))
+      await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
-  // Widget: Kartu Konfirmasi Pembayaran (Hijau/Biru)
-  Widget _buildCardKonfirmasiBayar(String method, double amount) {
-    bool isCash = method == 'cash';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isCash ? Colors.green.shade50 : Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isCash ? Colors.green.shade200 : Colors.blue.shade200,
-        ),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(
-                isCash ? LucideIcons.coins : LucideIcons.creditCard,
-                size: 30,
-                color: isCash ? Colors.green : Colors.blue,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isCash ? "Terima Tunai?" : "Cek Transfer Masuk",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      "User mengklaim bayar Rp ${NumberFormat('#,###').format(amount)}",
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _konfirmasiPembayaran(false), // Tolak
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                  ),
-                  child: const Text("Belum Ada"),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _konfirmasiPembayaran(true), // Terima
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isCash ? Colors.green : Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text("Ya, Diterima"),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
+  // ===========================================================================
+  // BAGIAN 2: UI (LAYOUT)
+  // ===========================================================================
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
@@ -555,156 +436,506 @@ class _DetailOrderMitraPageState extends State<DetailOrderMitraPage> {
         final paymentStatus = data['payment_status'] ?? 'unpaid';
         final paymentMethod = data['payment_method'];
         final totalBayar = (data['total_estimasi'] ?? 0).toDouble();
-        final fotoUrl = data['foto_kondisi']?['url'];
+        final String kontakUser = data['kontak_lain'] ?? '-';
+        final String emailUser = data['email'] ?? '-';
+        final String jenisLokasi = data['jenis_lokasi'] ?? '-';
 
         return Scaffold(
+          backgroundColor: const Color(0xFFF5F7FA),
           appBar: AppBar(
-            title: const Text('Order Masuk (Mitra)'),
+            title: const Text('Order Masuk'),
             backgroundColor: Colors.blue.shade800,
             foregroundColor: Colors.white,
             centerTitle: true,
+            elevation: 0,
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. CEK KONFIRMASI PEMBAYARAN (PRIORITAS UTAMA)
                 if (paymentStatus == 'pending_confirmation')
                   _buildCardKonfirmasiBayar(paymentMethod, totalBayar),
+                if (data['revisi_biaya']?['status'] == 'pending_approval')
+                  _buildCardPendingRevisi(data),
 
-                // 2. KARTU UTAMA
-                Card(
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        OrderStatusBadge(status: status),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Total Estimasi",
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            Text(
-                              "Rp ${NumberFormat('#,###').format(totalBayar)}",
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
-                            ),
-                          ],
+                Row(
+                  children: [
+                    Expanded(child: OrderStatusBadge(status: status)),
+                    const SizedBox(width: 10),
+                    if (paymentStatus == 'paid')
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
-                        if (paymentStatus == 'paid')
-                          Container(
-                            margin: const EdgeInsets.only(top: 10),
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Colors.green,
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  "LUNAS",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          "LUNAS",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
-                      ],
-                    ),
+                        ),
+                      ),
+                    if (paymentStatus == 'unpaid')
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          "BELUM BAYAR",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildCustomerCard(emailUser, kontakUser, jenisLokasi),
+                const SizedBox(height: 16),
+                const Text(
+                  "Detail Pekerjaan",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
                   ),
                 ),
-
-                const SizedBox(height: 12),
-                OrderInfoCard(data: data), // Shared Widget
-                const SizedBox(height: 12),
-
-                if (fotoUrl != null)
+                const SizedBox(height: 8),
+                OrderInfoCard(data: data),
+                const SizedBox(height: 16),
+                if (data['foto_kondisi']?['url'] != null) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
-                      fotoUrl,
+                      data['foto_kondisi']['url'],
                       height: 180,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
                   ),
-
-                const SizedBox(height: 20),
-
-                // 3. TOMBOL AKSI BERDASARKAN STATUS
-                if (status == 'diproses')
-                  ActionButton(
-                    label: "Terima & Mulai",
-                    icon: Icons.motorcycle,
-                    color: Colors.blue.shade700,
-                    onPressed: () =>
-                        konfirmasiUpdateStatus('sedang_dikerjakan'),
-                  ),
-
-                if (status == 'sedang_dikerjakan') ...[
-                  // CEK REVISI PENDING
-                  if (data['revisi_biaya']?['status'] == 'pending_approval')
-                    _buildCardPendingRevisi(data)
-                  else
-                    // HANYA BISA INPUT BIAYA JIKA BELUM LUNAS (Opsional logic)
-                    ActionButton(
-                      label: "Input / Revisi Biaya",
-                      icon: LucideIcons.receipt,
-                      color: Colors.orange.shade800,
-                      onPressed: () => _tampilDialogInputBiaya(data),
-                    ),
-
-                  const SizedBox(height: 10),
-
-                  // TOMBOL SELESAI
-                  ActionButton(
-                    label: "Selesaikan Pekerjaan",
-                    icon: Icons.check_circle,
-                    color: Colors.green,
-                    onPressed: () {
-                      // BLOCKER: Jangan selesai jika pembayaran belum confirmed (optional)
-                      if (paymentStatus == 'pending_confirmation') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Konfirmasi pembayaran dulu!"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
-                      // BLOCKER: Jangan selesai jika revisi gantung
-                      if (data['revisi_biaya']?['status'] ==
-                          'pending_approval') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Tunggu revisi disetujui user!"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
-                      konfirmasiUpdateStatus('selesai');
-                    },
-                  ),
+                  const SizedBox(height: 16),
                 ],
+
+                // CARD KEUANGAN
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade100),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Total Estimasi",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        "Rp ${NumberFormat('#,###').format(totalBayar)}",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // TOMBOL AKSI (GESER SELESAI ADA DISINI)
+                _buildActionButtons(status, data, paymentStatus, totalBayar),
+                const SizedBox(height: 40),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  // --- WIDGETS ---
+  Widget _buildCustomerCard(String email, String phone, String lokasi) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0xFFE3F2FD),
+                child: Icon(Icons.person, color: Colors.blue),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Pelanggan",
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.green.shade50,
+                ),
+                icon: const Icon(
+                  LucideIcons.messageCircle,
+                  color: Colors.green,
+                ),
+                tooltip: "Hubungi User",
+                onPressed: () => _hubungiUser(phone),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.phone, size: 16, color: Colors.grey),
+                  const SizedBox(width: 6),
+                  Text(
+                    phone,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  const Icon(Icons.location_city, size: 16, color: Colors.grey),
+                  const SizedBox(width: 6),
+                  Text(
+                    lokasi,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardKonfirmasiBayar(String? method, double amount) {
+    bool isCash = method == 'cash';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isCash ? Colors.green.shade50 : Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isCash ? Colors.green : Colors.blue),
+      ),
+      child: Column(
+        children: [
+          Text(
+            isCash ? "Terima Uang Tunai?" : "Cek Transfer Masuk",
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "User konfirmasi bayar Rp ${NumberFormat('#,###').format(amount)}",
+            style: const TextStyle(fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _konfirmasiPembayaran(false),
+                  child: const Text("Belum"),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _konfirmasiPembayaran(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isCash ? Colors.green : Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("Terima"),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardPendingRevisi(Map<String, dynamic> data) {
+    final total = data['revisi_biaya']['total_akhir'] ?? 0;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.hourglass_top, color: Colors.orange),
+              SizedBox(width: 8),
+              Text(
+                "Menunggu User Setuju",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Anda mengajukan perubahan harga. Tunggu user konfirmasi.",
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _lihatDetailPending(data['revisi_biaya']),
+                  child: const Text("Lihat"),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _batalkanRevisi,
+                icon: const Icon(Icons.delete, color: Colors.red),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Tambahkan parameter 'double totalBayar' disini 👇
+  Widget _buildActionButtons(
+    String status,
+    Map<String, dynamic> data,
+    String paymentStatus,
+    double totalBayar,
+  ) {
+    if (status == 'diproses') {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue.shade800,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          icon: const Icon(Icons.motorcycle),
+          label: const Text(
+            "Terima & Mulai Jalan",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          onPressed: konfirmasiMulaiJalan,
+        ),
+      );
+    }
+
+    if (status == 'sedang_dikerjakan') {
+      bool isPending = data['revisi_biaya']?['status'] == 'pending_approval';
+      bool isPaid = paymentStatus == 'paid';
+
+      return Column(
+        children: [
+          if (!isPending)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                icon: const Icon(LucideIcons.receipt),
+                label: const Text(
+                  "Input / Revisi Biaya",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => _tampilDialogInputBiaya(data),
+              ),
+            ),
+
+          const SizedBox(height: 20),
+
+          // --- SLIDE TO FINISH ---
+          SlideToFinishButton(
+            isPaid: isPaid,
+            isPendingRevisi: isPending,
+            // SEKARANG totalBayar SUDAH DIKENALI 👇
+            onCompleted: () => _selesaikanOrder(totalBayar),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+// ===========================================================================
+// [WIDGET BARU] SLIDE TO FINISH (GESER UNTUK SELESAI)
+// ===========================================================================
+class SlideToFinishButton extends StatefulWidget {
+  final bool isPaid;
+  final bool isPendingRevisi;
+  final VoidCallback onCompleted;
+
+  const SlideToFinishButton({
+    super.key,
+    required this.isPaid,
+    required this.isPendingRevisi,
+    required this.onCompleted,
+  });
+
+  @override
+  State<SlideToFinishButton> createState() => _SlideToFinishButtonState();
+}
+
+class _SlideToFinishButtonState extends State<SlideToFinishButton> {
+  double _dragValue = 0.0;
+  double _maxWidth = 0.0;
+  bool _submitted = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // LOGIKA KUNCI:
+    // Jika belum bayar OR ada revisi gantung -> LOCKED (Abu-abu)
+    bool isLocked = !widget.isPaid || widget.isPendingRevisi;
+
+    // Teks & Warna
+    String label = "Geser untuk Selesai";
+    Color bgColor = Colors.green;
+    IconData icon = Icons.chevron_right;
+
+    if (!widget.isPaid) {
+      label = "Menunggu Pembayaran";
+      bgColor = Colors.grey.shade400;
+      icon = Icons.lock;
+    } else if (widget.isPendingRevisi) {
+      label = "Tunggu Revisi Disetujui";
+      bgColor = Colors.orange.shade300;
+      icon = Icons.lock_clock;
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _maxWidth = constraints.maxWidth;
+        return Container(
+          height: 60,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: Stack(
+            children: [
+              // TEXT LABEL (Centered)
+              Center(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+
+              // DRAGGABLE HANDLE
+              Positioned(
+                left: _dragValue,
+                child: GestureDetector(
+                  onHorizontalDragUpdate: (details) {
+                    if (isLocked || _submitted)
+                      return; // Tidak bisa geser kalau dikunci
+                    setState(() {
+                      _dragValue = (_dragValue + details.delta.dx).clamp(
+                        0.0,
+                        _maxWidth - 60,
+                      );
+                    });
+                  },
+                  onHorizontalDragEnd: (details) {
+                    if (isLocked || _submitted) return;
+                    if (_dragValue > _maxWidth * 0.7) {
+                      // Jika geser > 70%
+                      setState(() {
+                        _dragValue = _maxWidth - 60;
+                        _submitted = true;
+                      });
+                      widget.onCompleted(); // Panggil fungsi selesai
+                    } else {
+                      setState(
+                        () => _dragValue = 0,
+                      ); // Balik ke awal (snap back)
+                    }
+                  },
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Icon(icon, color: bgColor, size: 28),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
